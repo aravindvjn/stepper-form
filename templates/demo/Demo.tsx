@@ -3,8 +3,8 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { StepConfig } from "../stepper-ui/";
-import { StepperForm } from "@/components/stepper-ui";
+import type { StepConfig } from "../stepper-form";
+import { StepperForm } from "../stepper-form";
 
 export const demoSchema = z.object({
   text_input: z.string().min(1, "Text input is required"),
