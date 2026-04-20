@@ -39,29 +39,6 @@ Custom path:
 npx @aravindvjn/stepper-form init --path components/custom-stepper
 ```
 
----
-
-## ⚠️ Important (if you get 404 error)
-
-If you see:
-
-```
-npm ERR! 404 Not Found
-```
-
-That means the package is not published yet.
-
-**Fix:** Publish it first:
-
-```bash
-npm publish --access public
-```
-
-Then run:
-
-```bash
-npx @aravindvjn/stepper-form init
-```
 
 ---
 
