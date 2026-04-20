@@ -3,6 +3,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,7 +51,11 @@ async function copyDir(src, dest) {
 function getFlagValue(flagName) {
   const index = args.findIndex((arg) => arg === flagName);
   if (index === -1) return null;
-  return args[index + 1] || null;
+
+  const nextValue = args[index + 1];
+  if (!nextValue || nextValue.startsWith("--")) return null;
+
+  return nextValue;
 }
 
 async function resolveBaseDir() {
@@ -82,27 +87,94 @@ async function detectPackageManager() {
     return "yarn";
   }
 
-  if (await pathExists(path.join(cwd, "bun.lockb")) || await pathExists(path.join(cwd, "bun.lock"))) {
+  if (
+    (await pathExists(path.join(cwd, "bun.lockb"))) ||
+    (await pathExists(path.join(cwd, "bun.lock")))
+  ) {
     return "bun";
   }
 
   return "npm";
 }
 
-function getInstallCommand(pkgManager) {
+function getInstallCommand(pkgManager, isDev = false) {
   if (pkgManager === "pnpm") {
-    return "pnpm add";
+    return isDev ? "pnpm add -D" : "pnpm add";
   }
 
   if (pkgManager === "yarn") {
-    return "yarn add";
+    return isDev ? "yarn add -D" : "yarn add";
   }
 
   if (pkgManager === "bun") {
-    return "bun add";
+    return isDev ? "bun add -d" : "bun add";
   }
 
-  return "npm install";
+  return isDev ? "npm install -D" : "npm install";
+}
+
+async function readPackageJson() {
+  const packageJsonPath = path.join(cwd, "package.json");
+
+  if (!(await pathExists(packageJsonPath))) {
+    return null;
+  }
+
+  try {
+    const content = await fs.readFile(packageJsonPath, "utf8");
+    return JSON.parse(content);
+  } catch {
+    return null;
+  }
+}
+
+async function isTypeScriptProject() {
+  const tsconfigExists =
+    (await pathExists(path.join(cwd, "tsconfig.json"))) ||
+    (await pathExists(path.join(cwd, "tsconfig.base.json")));
+
+  if (tsconfigExists) {
+    return true;
+  }
+
+  const packageJson = await readPackageJson();
+
+  if (!packageJson) {
+    return false;
+  }
+
+  const deps = {
+    ...(packageJson.dependencies || {}),
+    ...(packageJson.devDependencies || {}),
+  };
+
+  return Boolean(deps.typescript);
+}
+
+function getMissingPackages(packageJson, packages, isDev = false) {
+  const existing = {
+    ...(packageJson?.dependencies || {}),
+    ...(packageJson?.devDependencies || {}),
+    ...(packageJson?.peerDependencies || {}),
+  };
+
+  return packages.filter((pkg) => !existing[pkg]);
+}
+
+function installPackages(pkgManager, packages, isDev = false) {
+  if (!packages.length) return;
+
+  const commandToRun = `${getInstallCommand(pkgManager, isDev)} ${packages.join(" ")}`;
+
+  console.log("");
+  console.log(isDev ? "Installing dev dependencies..." : "Installing dependencies...");
+  console.log(commandToRun);
+  console.log("");
+
+  execSync(commandToRun, {
+    cwd,
+    stdio: "inherit",
+  });
 }
 
 function printHelp() {
@@ -114,9 +186,10 @@ Usage:
   stepper-form --help
 
 Options:
-  --demo          Also generate demo files
-  --path <path>   Custom target path
-  --help          Show help
+  --demo             Also generate demo files
+  --path <path>      Custom target path
+  --skip-install     Skip dependency installation
+  --help             Show help
 `);
 }
 
@@ -133,11 +206,13 @@ async function main() {
   }
 
   const withDemo = args.includes("--demo");
+  const skipInstall = args.includes("--skip-install");
   const customPath = getFlagValue("--path");
 
   const baseDir = await resolveBaseDir();
   const pkgManager = await detectPackageManager();
-  const installCommand = getInstallCommand(pkgManager);
+  const packageJson = await readPackageJson();
+  const tsProject = await isTypeScriptProject();
 
   const stepperTargetDir = customPath
     ? path.join(cwd, customPath)
@@ -181,7 +256,7 @@ async function main() {
     }
   }
 
-  const deps = [
+  const runtimeDeps = [
     "react-hook-form",
     "zod",
     "@hookform/resolvers",
@@ -192,20 +267,59 @@ async function main() {
     "@countrystatecity/countries-browser",
   ];
 
+  const tsDevDeps = tsProject
+    ? ["typescript", "@types/react", "@types/react-dom", "@types/node"]
+    : [];
+
+  const missingRuntimeDeps = getMissingPackages(packageJson, runtimeDeps, false);
+  const missingTsDevDeps = getMissingPackages(packageJson, tsDevDeps, true);
+
+  if (!skipInstall) {
+    try {
+      installPackages(pkgManager, missingRuntimeDeps, false);
+      installPackages(pkgManager, missingTsDevDeps, true);
+    } catch (error) {
+      console.warn("");
+      console.warn("Dependency installation failed.");
+      console.warn("You can install them manually:");
+      if (missingRuntimeDeps.length) {
+        console.warn(`${getInstallCommand(pkgManager, false)} ${missingRuntimeDeps.join(" ")}`);
+      }
+      if (missingTsDevDeps.length) {
+        console.warn(`${getInstallCommand(pkgManager, true)} ${missingTsDevDeps.join(" ")}`);
+      }
+      console.warn("");
+    }
+  }
+
   console.log("");
   console.log("✨ Stepper Form installed successfully");
   console.log("");
-  console.log(`📁 ${path.relative(cwd, stepperTargetDir)}`);
+  console.log(`${path.relative(cwd, stepperTargetDir)}`);
 
   if (demoCreated) {
-    console.log(`📁 ${path.relative(cwd, demoTargetDir)}`);
+    console.log(`${path.relative(cwd, demoTargetDir)}`);
+  }
+
+  console.log("");
+  console.log(`Package manager: ${pkgManager}`);
+  console.log(`TypeScript project: ${tsProject ? "yes" : "no"}`);
+
+  if (skipInstall) {
+    console.log("");
+    console.log("Install required dependencies:");
+    if (missingRuntimeDeps.length) {
+      console.log(`${getInstallCommand(pkgManager, false)} ${missingRuntimeDeps.join(" ")}`);
+    }
+    if (missingTsDevDeps.length) {
+      console.log(`${getInstallCommand(pkgManager, true)} ${missingTsDevDeps.join(" ")}`);
+    }
   }
 
   console.log("");
   console.log("Next steps:");
-  console.log(`1. ${installCommand} ${deps.join(" ")}`);
-  console.log(`2. Import from "@/components/stepper-form"`);
-  console.log("3. Start building 🚀");
+  console.log(`1. Import from "@/components/stepper-form"`);
+  console.log("2. Start building");
   console.log("");
 }
 

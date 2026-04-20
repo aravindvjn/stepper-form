@@ -59,7 +59,7 @@ Automatically detects your project structure:
 After running the CLI:
 
 ```bash
-npm install react-hook-form zod @hookform/resolvers class-variance-authority clsx tailwind-merge lucide-react @countrystatecity/countries-browser
+npm install react-hook-form zod @hookform/resolvers class-variance-authority clsx tailwind-merge lucide-react @countrystatecity/countries-browser 
 ```
 
 (or pnpm / yarn will be suggested automatically)
