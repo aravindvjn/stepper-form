@@ -85,7 +85,7 @@ export const schema = z.object({
   skills: z.array(z.string()).min(1),
 });
 ```
-
+a
 ### 3. Create steps config
 
 ```ts

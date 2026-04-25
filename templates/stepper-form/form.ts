@@ -51,7 +51,10 @@ export type FieldClassNames = {
   dropdown?: string;
 };
 
-export type BaseFieldConfig<T extends FieldValues, K extends FieldType = FieldType> = {
+export type BaseFieldConfig<
+  T extends FieldValues,
+  K extends FieldType = FieldType,
+> = {
   name: Path<T>;
   label: string;
   type: K;
@@ -158,7 +161,10 @@ export type CountryFieldConfig<T extends FieldValues> = BaseFieldConfig<
   "country"
 > & {
   countryProps?: {
-    onValueChange?: (value: string, meta?: { name: string; iso2: string }) => void;
+    onValueChange?: (
+      value: string,
+      meta?: { name: string; iso2: string },
+    ) => void;
   };
 };
 
@@ -219,12 +225,12 @@ export type StepperFormProps<T extends FieldValues> = {
   title?: string;
   description?: string;
   submitLabel?: string;
+  gridClassName?: string;
   updateLabel?: string;
   nextLabel?: string;
   backLabel?: string;
   isEdit?: boolean;
   isSubmitting?: boolean;
-  gridColumns?: 1 | 2;
   renderField?: (props: RenderFieldProps<T>) => ReactNode;
   renderUncommonField?: (props: RenderFieldProps<T>) => ReactNode;
   onStepChange?: (step: number) => void;

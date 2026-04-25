@@ -79,7 +79,7 @@ export function PhoneField<T extends FieldValues>({
       classNames={classNames}
     >
       <div className="flex w-full gap-2">
-        <div ref={wrapperRef} className="relative w-[140px] shrink-0">
+        <div ref={wrapperRef} className="relative w-[100px] shrink-0">
           <button
             type="button"
             disabled={disabled}
@@ -106,7 +106,7 @@ export function PhoneField<T extends FieldValues>({
           {open && !disabled && (
             <div
               className={cn(
-                "absolute left-0 top-[calc(100%+8px)] z-50 w-[320px] rounded-lg border border-zinc-200 bg-white p-2 shadow-lg",
+                "absolute left-0 top-[calc(100%+8px)] z-50 w-65 md:w-[320px] rounded-lg border border-zinc-200 bg-white p-2 shadow-lg",
                 classNames?.dropdown,
               )}
             >

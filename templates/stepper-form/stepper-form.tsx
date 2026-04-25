@@ -19,12 +19,12 @@ export function StepperForm<T extends FieldValues>({
   backLabel = "Back",
   isEdit = false,
   isSubmitting = false,
-  gridColumns = 2,
   renderField,
   renderUncommonField,
   onStepChange,
   validateStep = true,
   containerClassName,
+  gridClassName,
 }: StepperFormProps<T>) {
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -125,13 +125,10 @@ export function StepperForm<T extends FieldValues>({
 
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div
-          className="grid gap-5"
-          style={{
-            gridTemplateColumns:
-              gridColumns === 1
-                ? "repeat(1, minmax(0, 1fr))"
-                : "repeat(2, minmax(0, 1fr))",
-          }}
+          className={cn(
+            "grid gap-5  grid-cols-1 md:grid-cols-2",
+            gridClassName,
+          )}
         >
           {currentStepConfig?.fields.map((fieldConfig) => {
             const widthStyle =
