@@ -60,7 +60,9 @@ function getFlagValue(flagName) {
 
 async function resolveBaseDir() {
   const hasSrc = await pathExists(path.join(cwd, "src"));
-  const hasSrcComponents = await pathExists(path.join(cwd, "src", "components"));
+  const hasSrcComponents = await pathExists(
+    path.join(cwd, "src", "components"),
+  );
   const hasRootComponents = await pathExists(path.join(cwd, "components"));
 
   if (hasSrcComponents) {
@@ -167,7 +169,9 @@ function installPackages(pkgManager, packages, isDev = false) {
   const commandToRun = `${getInstallCommand(pkgManager, isDev)} ${packages.join(" ")}`;
 
   console.log("");
-  console.log(isDev ? "Installing dev dependencies..." : "Installing dependencies...");
+  console.log(
+    isDev ? "Installing dev dependencies..." : "Installing dependencies...",
+  );
   console.log(commandToRun);
   console.log("");
 
@@ -222,7 +226,9 @@ async function main() {
 
   const stepperExists = await pathExists(stepperTargetDir);
   if (stepperExists) {
-    console.error(`Target already exists: ${path.relative(cwd, stepperTargetDir)}`);
+    console.error(
+      `Target already exists: ${path.relative(cwd, stepperTargetDir)}`,
+    );
     console.error("Remove it first or use --path with another location.");
     process.exit(1);
   }
@@ -247,7 +253,9 @@ async function main() {
       const demoExists = await pathExists(demoTargetDir);
 
       if (demoExists) {
-        console.warn(`Demo folder already exists: ${path.relative(cwd, demoTargetDir)}`);
+        console.warn(
+          `Demo folder already exists: ${path.relative(cwd, demoTargetDir)}`,
+        );
         console.warn("Skipping demo generation.");
       } else {
         await copyDir(demoTemplateDir, demoTargetDir);
@@ -265,13 +273,18 @@ async function main() {
     "tailwind-merge",
     "lucide-react",
     "@countrystatecity/countries-browser",
+    "country-data",
   ];
 
   const tsDevDeps = tsProject
     ? ["typescript", "@types/react", "@types/react-dom", "@types/node"]
     : [];
 
-  const missingRuntimeDeps = getMissingPackages(packageJson, runtimeDeps, false);
+  const missingRuntimeDeps = getMissingPackages(
+    packageJson,
+    runtimeDeps,
+    false,
+  );
   const missingTsDevDeps = getMissingPackages(packageJson, tsDevDeps, true);
 
   if (!skipInstall) {
@@ -283,10 +296,14 @@ async function main() {
       console.warn("Dependency installation failed.");
       console.warn("You can install them manually:");
       if (missingRuntimeDeps.length) {
-        console.warn(`${getInstallCommand(pkgManager, false)} ${missingRuntimeDeps.join(" ")}`);
+        console.warn(
+          `${getInstallCommand(pkgManager, false)} ${missingRuntimeDeps.join(" ")}`,
+        );
       }
       if (missingTsDevDeps.length) {
-        console.warn(`${getInstallCommand(pkgManager, true)} ${missingTsDevDeps.join(" ")}`);
+        console.warn(
+          `${getInstallCommand(pkgManager, true)} ${missingTsDevDeps.join(" ")}`,
+        );
       }
       console.warn("");
     }
@@ -309,10 +326,14 @@ async function main() {
     console.log("");
     console.log("Install required dependencies:");
     if (missingRuntimeDeps.length) {
-      console.log(`${getInstallCommand(pkgManager, false)} ${missingRuntimeDeps.join(" ")}`);
+      console.log(
+        `${getInstallCommand(pkgManager, false)} ${missingRuntimeDeps.join(" ")}`,
+      );
     }
     if (missingTsDevDeps.length) {
-      console.log(`${getInstallCommand(pkgManager, true)} ${missingTsDevDeps.join(" ")}`);
+      console.log(
+        `${getInstallCommand(pkgManager, true)} ${missingTsDevDeps.join(" ")}`,
+      );
     }
   }
 
